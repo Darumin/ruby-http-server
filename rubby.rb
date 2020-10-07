@@ -1,4 +1,4 @@
-require 'socket'
+require "socket"
 
 class Server
     def initialize
@@ -18,7 +18,6 @@ class Server
         # listen for connections
         @socket.listen(1)
         puts "Listening...\n"
-
         # part out socket.accept
         conn, conn_addr = @socket.accept
         puts "✔️ Client connected successfully.\n"
@@ -32,25 +31,22 @@ class Server
         connection.send "You connected to the dictionary protocol.\r\n", 0
 
         loop do
-            data = connection.recvfrom(25)[0].chomp.split(/ /, 3)
-            command, key, setdesc = data[0], data[1], data[2]
+            data = connection.recvfrom(128)[0].chomp.split(/ /, 3)
+            command, key, setdesc = *data
+            puts command, key, setdesc
 
             sleep 1
 
             case
             when command.eql?("SET")
-                if @definitions.has_key?(key)
-                    connection.send "Key already set.\r\n", 0
-                else
-                    @definitions[key] = setdesc
-                    connection.send "Key is set.\r\n", 0
-                end     
+                @definitions[key] = setdesc
+                connection.send "Key `#{key}` has been set to `#{setdesc}`.\r\n", 0   
             when command.eql?("GET")
                 if key == nil
                     connection.send "No such word exists.\r\n", 0
                 else
                     desc = @definitions[key]
-                    connection.send "#{desc}\r\n", 0
+                    connection.send "ANSWER #{desc}\r\n", 0
                 end
             when command.eql?("CLEAR") 
                 @definitions.clear
@@ -69,9 +65,11 @@ class Server
         puts "Now closing the socket."
         @socket.close
     end
-        
 end
+
 
 serve = Server.new()
 serve.listen
 serve.close
+
+
